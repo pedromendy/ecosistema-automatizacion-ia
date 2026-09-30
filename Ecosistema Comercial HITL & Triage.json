@@ -1,0 +1,522 @@
+{
+  "name": "Ecosistema Comercial HITL & Triage",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "authentication": "airtableTokenApi",
+        "baseId": {
+          "__rl": true,
+          "value": "appYPDDjrOoAGH7di",
+          "mode": "id"
+        },
+        "tableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "tblMyp1NgoqU9FVkS"
+        },
+        "triggerField": "Fecha de creacion",
+        "downloadAttachments": "",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.airtableTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "af35e48c-df7e-4e15-b5fa-f956423cc3b2",
+      "name": "trigger: inbound ticket creado",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "PjXKCaK8RK9pFcTi",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Ingesta de eventos en tiempo real / polling.   Monitorea la tabla Tickets_venta y se dispara ante nuevos registros mediante el campo de control Fecha de creacion para garantizar idempotencia y evitar procesar eventos duplicados.",
+        "height": 176,
+        "width": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -304,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "e7e9a683-ee78-4071-a981-b4a388d20d88",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "Cuando entra el mensaje, solo viene el ID de la persona. Este nodo va a la libreta de contactos, busca a ese cliente por su nombre o código y trae su ficha: cómo se llama, qué teléfono tiene y qué empresa o perfil tiene cargado.",
+        "height": 176,
+        "width": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        112,
+        -176
+      ],
+      "typeVersion": 1,
+      "id": "04fbc22e-1fd8-4051-8554-e8ffd6e88f23",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "base": {
+          "__rl": true,
+          "value": "appYPDDjrOoAGH7di",
+          "mode": "list",
+          "cachedResultName": "Ecosistema Comercial HITL",
+          "cachedResultUrl": "https://airtable.com/appYPDDjrOoAGH7di"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tbl9S3yIxzzTWT5G0",
+          "mode": "list",
+          "cachedResultName": "Contactos",
+          "cachedResultUrl": "https://airtable.com/appYPDDjrOoAGH7di/tbl9S3yIxzzTWT5G0"
+        },
+        "id": "={{ $json.fields.Contacto[0] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "cb2aa6d6-0e9a-4e09-b463-483aa59afe15",
+      "name": "Crm: buscar datos de contacto",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "PjXKCaK8RK9pFcTi",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appYPDDjrOoAGH7di",
+          "mode": "list",
+          "cachedResultName": "Ecosistema Comercial HITL",
+          "cachedResultUrl": "https://airtable.com/appYPDDjrOoAGH7di"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblSbg33RhdgqGKd1",
+          "mode": "list",
+          "cachedResultName": "Knowledge_RAG",
+          "cachedResultUrl": "https://airtable.com/appYPDDjrOoAGH7di/tblSbg33RhdgqGKd1"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "a8a54f20-8938-4f19-9e0a-f23a576fc08f",
+      "name": "knowledge RAG , Leer precios",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "PjXKCaK8RK9pFcTi",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Inyecta contexto verificado (precios, políticas, tiempos) para prevenir alucinaciones en el modelo de lenguaje (LLM)."
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        352,
+        176
+      ],
+      "typeVersion": 1,
+      "id": "22a4af34-b2b3-40de-9ce7-e9c7803a04cb",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-3-flash-preview",
+          "mode": "id"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Sos el asesor comercial del negocio. Tu tarea es responder la consulta del cliente de forma clara, amable y profesional, usando únicamente la información oficial proporcionada.\n\n--- INFORMACIÓN DEL CLIENTE ---\nNombre: {{ $('Crm: buscar datos de contacto').item.json.fields['Nombre'] }}\n\n--- MENSAJE RECIBIDO ---\n{{ $('trigger: inbound ticket creado').item.json.fields['Mensaje original'] }}\n--- CATÁLOGO Y POLÍTICAS OFICIALES ---\n{{ JSON.stringify($('knowledge RAG , Leer precios').all().map(r => r.json.fields)) }}\n\n--- INSTRUCCIONES ---\n1. Determiná la categoría/intención (por ejemplo: Venta minorista, Venta mayorista o Consulta general).\n2. Redactá una propuesta de respuesta completa lista para mandarle al cliente, saludándolo por su nombre y cotizando con los precios oficiales.\n3. Devolvé la respuesta en este formato exacto:\nCATEGORIA: [Escribí acá la categoría]\nPROPUESTA: [Escribí acá el texto del mensaje sugerido]"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "d30df9b8-7a8c-43f9-983e-2de59698bb7b",
+      "name": "Ia redacta la respuesta",
+      "retryOnFail": true,
+      "waitBetweenTries": 200,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "vIKGFQHNwPuusL35",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appYPDDjrOoAGH7di",
+          "mode": "list",
+          "cachedResultName": "Ecosistema Comercial HITL",
+          "cachedResultUrl": "https://airtable.com/appYPDDjrOoAGH7di"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblMyp1NgoqU9FVkS",
+          "mode": "list",
+          "cachedResultName": "Tickets_venta",
+          "cachedResultUrl": "https://airtable.com/appYPDDjrOoAGH7di/tblMyp1NgoqU9FVkS"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Aprobado": false,
+            "ID ticket": "=",
+            "id": "={{ $('trigger: inbound ticket creado').item.json.id }}",
+            "Propuesta Ia": "={{ $json.content.parts[0].text }}",
+            "Categoria/intencion": "Cotizacion/venta",
+            "Estado": "En revisión,"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "ID ticket",
+              "displayName": "ID ticket",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Contacto",
+              "displayName": "Contacto",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Mensaje original",
+              "displayName": "Mensaje original",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Categoria/intencion",
+              "displayName": "Categoria/intencion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Consulta de Producto ",
+                  "value": "Consulta de Producto "
+                },
+                {
+                  "name": "Spam/Inválido",
+                  "value": "Spam/Inválido"
+                },
+                {
+                  "name": "Soporte/Logística",
+                  "value": "Soporte/Logística"
+                },
+                {
+                  "name": "Cotizacion/venta",
+                  "value": "Cotizacion/venta"
+                },
+                {
+                  "name": "",
+                  "value": ""
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Propuesta Ia",
+              "displayName": "Propuesta Ia",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Nuevo",
+                  "value": "Nuevo"
+                },
+                {
+                  "name": "En revisión,",
+                  "value": "En revisión,"
+                },
+                {
+                  "name": "Procesando IA",
+                  "value": "Procesando IA"
+                },
+                {
+                  "name": "Aprobado",
+                  "value": "Aprobado"
+                },
+                {
+                  "name": "Enviado",
+                  "value": "Enviado"
+                },
+                {
+                  "name": "Error",
+                  "value": "Error"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Aprobado",
+              "displayName": "Aprobado",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Feedback humano",
+              "displayName": "Feedback humano",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Fecha de creacion",
+              "displayName": "Fecha de creacion",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "45310dc7-92ac-4bed-8a58-57bc1d4fb905",
+      "name": "Guardar respuesta en Airtable",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "PjXKCaK8RK9pFcTi",
+          "name": "Airtable Personal Access Token account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Agarra la respuesta y la categoría que armó la IA y las anota en la fila del ticket en Airtable. Así el vendedor solo tiene que entrar, pegarle una leída rápida y darle el visto bueno.",
+        "height": 176
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        976,
+        160
+      ],
+      "typeVersion": 1,
+      "id": "ccf70bb8-68c9-48cb-9bce-911a886d48cf",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "sendTo": "pedromendy04@gmail.com",
+        "subject": "[HITL] Nuevo ticket de Pedro listo para revisión",
+        "emailType": "text",
+        "message": "={{ $json.fields['Propuesta Ia'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1264,
+        0
+      ],
+      "id": "0675b39a-9d75-4d16-90c6-af983956df05",
+      "name": "Send a message",
+      "webhookId": "bfea4908-7007-4115-b207-b64a25835b65",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Mud9mOScIDcRs7RL",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Canal de gmail donde se envia la respuesta final con la categoria y la propuesta generada anteriormente",
+        "height": 112
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1200,
+        -112
+      ],
+      "typeVersion": 1,
+      "id": "24b1235e-2288-4b60-8348-9a80a69cb995",
+      "name": "Sticky Note4"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "trigger: inbound ticket creado": {
+      "main": [
+        [
+          {
+            "node": "Crm: buscar datos de contacto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crm: buscar datos de contacto": {
+      "main": [
+        [
+          {
+            "node": "knowledge RAG , Leer precios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "knowledge RAG , Leer precios": {
+      "main": [
+        [
+          {
+            "node": "Ia redacta la respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ia redacta la respuesta": {
+      "main": [
+        [
+          {
+            "node": "Guardar respuesta en Airtable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar respuesta en Airtable": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8d8a8a83-0a53-4778-8c6b-c789acbc3e55",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "926d91344ff3155967d239d0c57640a3d9a2b8eeabeb9e4ef341fb65dffb77f0"
+  },
+  "nodeGroups": [],
+  "id": "kQ1vqEFKFJY6Dwaf",
+  "tags": []
+}
